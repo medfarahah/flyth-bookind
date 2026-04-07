@@ -70,3 +70,11 @@ Install [Vercel CLI](https://vercel.com/docs/cli) optional:
 ```bash
 npx vercel
 ```
+
+## 7. API returns HTML instead of JSON
+
+If `/api/...` responses look like your `index.html` (DOCTYPE, `<div id="root">`), the SPA fallback was routing **all** paths to `index.html`, including `/api`.
+
+This project’s `vercel.json` only rewrites **non-API** paths to `index.html` (see the `rewrites` entry). Redeploy after pulling that change.
+
+Quick check in the browser: open `https://YOUR_DOMAIN/api/health` — you should see `{"ok":true}` as JSON, not HTML.
