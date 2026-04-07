@@ -133,7 +133,21 @@ export async function fetchGoogleFlightsFromSerp(params: SerpSearchParams) {
     url.searchParams.set(key, String(v).trim())
   }
 
-  const res = await fetch(url.toString())
+  /** Fail before Vercel Hobby ~10s wall clock; leaves room for Prisma + JSON work. */
+  const SERP_TIMEOUT_MS = Number(process.env.SERPAPI_FETCH_TIMEOUT_MS) || 8000
+  const ac = new AbortController()
+  const timer = setTimeout(() => ac.abort(), SERP_TIMEOUT_MS)
+  let res: Response
+  try {
+    res = await fetch(url.toString(), { signal: ac.signal })
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') {
+      throw new AppError(`SerpAPI request timed out after ${SERP_TIMEOUT_MS}ms`, 504)
+    }
+    throw e
+  } finally {
+    clearTimeout(timer)
+  }
   if (!res.ok) {
     throw new AppError(`SerpAPI HTTP ${res.status}`, 502)
   }

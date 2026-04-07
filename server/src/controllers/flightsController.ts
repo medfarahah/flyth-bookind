@@ -126,18 +126,29 @@ export async function listFlights(req: Request, res: Response): Promise<void> {
     throw new AppError('Invalid date format. Use YYYY-MM-DD.', 400)
   }
 
+  // Narrow columns + cap rows. Date range uses @@index([departureTime]); ILIKE on from/to cannot use btree.
   const flights = await prisma.flight.findMany({
     where: {
       AND: [
-        { from: { contains: from, mode: 'insensitive' } },
-        { to: { contains: to, mode: 'insensitive' } },
         {
           departureTime: {
             gte: bounds.start,
             lte: bounds.end,
           },
         },
+        { from: { contains: from, mode: 'insensitive' } },
+        { to: { contains: to, mode: 'insensitive' } },
       ],
+    },
+    select: {
+      id: true,
+      airline: true,
+      from: true,
+      to: true,
+      departureTime: true,
+      arrivalTime: true,
+      price: true,
+      stops: true,
     },
     orderBy: { departureTime: 'asc' },
     take: 500,

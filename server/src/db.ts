@@ -7,6 +7,24 @@ if (!connectionString) {
   throw new Error('DATABASE_URL is required (Neon pooled connection string).')
 }
 
-const adapter = new PrismaNeon({ connectionString })
+/**
+ * Singleton Prisma client for serverless (Vercel) + dev HMR.
+ * @see https://www.prisma.io/docs/guides/performance-and-optimization/connection-management#serverless-environments-faas
+ */
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined
+}
 
-export const prisma = new PrismaClient({ adapter })
+function createPrismaClient() {
+  const adapter = new PrismaNeon({ connectionString })
+  return new PrismaClient({
+    adapter,
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+  })
+}
+
+export const prisma = globalForPrisma.prisma ?? createPrismaClient()
+
+if (!globalForPrisma.prisma) {
+  globalForPrisma.prisma = prisma
+}

@@ -79,6 +79,10 @@ This project’s `vercel.json` only rewrites **non-API** paths to `index.html` (
 
 Quick check in the browser: open `https://YOUR_DOMAIN/api/health` — you should see `{"ok":true}` as JSON, not HTML.
 
+## Stack note (not Next.js)
+
+This repo is **Vite + Express** on Vercel (`api/[[...path]].ts` + `serverless-http`). The same optimizations apply as for Next.js (Prisma singleton, indexes, `maxDuration`, bounded queries). **Do not use Edge Runtime** for these routes: Prisma + Neon adapter + Express require **Node.js**.
+
 ## 8. `FUNCTION_INVOCATION_TIMEOUT`
 
 Serverless has a **max duration** (this repo sets **60s** and **3008 MB** in `vercel.json` + `api/[[...path]].ts`). On the **Hobby** plan, Vercel may still **cap** execution (often **10s**) — upgrade to **Pro** for longer limits, or keep responses fast.

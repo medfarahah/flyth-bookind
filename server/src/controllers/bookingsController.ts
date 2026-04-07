@@ -65,6 +65,7 @@ export async function listMyBookings(req: Request, res: Response): Promise<void>
   const rows = await prisma.booking.findMany({
     where: { userId },
     orderBy: { createdAt: 'desc' },
+    take: 100,
     include: { flight: true },
   })
 
