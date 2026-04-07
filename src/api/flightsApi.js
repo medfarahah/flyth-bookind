@@ -3,6 +3,31 @@ import { API } from './endpoints.js'
 import { mapApiFlight } from './normalizeFlight.js'
 
 /**
+ * Ensures we always map a flight array; explains HTML/error objects from bad routes or proxies.
+ */
+function normalizeFlightArray(data, label) {
+  if (data == null) return []
+  if (Array.isArray(data)) return data
+  if (typeof data === 'object') {
+    const err = data.error
+    if (typeof err === 'string') {
+      const t = err.trim()
+      if (t.startsWith('<!DOCTYPE') || t.toLowerCase().startsWith('<html')) {
+        throw new ApiError(
+          `${label}: got a web page instead of JSON. Start the API (e.g. npm run dev:full) or check VITE_API_URL / deployment.`,
+          502
+        )
+      }
+      if (t) throw new ApiError(t, 500)
+    }
+  }
+  throw new ApiError(
+    `${label}: expected a JSON array; got ${data === null ? 'empty body' : typeof data}.`,
+    500
+  )
+}
+
+/**
  * GET /flights?from=&to=&date=YYYY-MM-DD
  */
 export async function fetchFlights({ from, to, departureDate }) {
@@ -12,10 +37,8 @@ export async function fetchFlights({ from, to, departureDate }) {
     date: departureDate,
   })
   const data = await getJson(API.flights.search(params.toString()))
-  if (!Array.isArray(data)) {
-    throw new ApiError('Unexpected flights response', 500)
-  }
-  return data.map(mapApiFlight)
+  const rows = normalizeFlightArray(data, 'Database flights')
+  return rows.map(mapApiFlight)
 }
 
 const SERP_OPTIONAL_KEYS = [
@@ -65,10 +88,8 @@ export async function fetchSerpFlights({
     if (s) params.set(key, s)
   }
   const data = await getJson(API.flights.serp(params.toString()))
-  if (!Array.isArray(data)) {
-    throw new ApiError('Unexpected Serp flights response', 500)
-  }
-  return data.map(mapApiFlight)
+  const rows = normalizeFlightArray(data, 'Live flights (SerpAPI)')
+  return rows.map(mapApiFlight)
 }
 
 const EXPLORE_EXTRA_KEYS = [

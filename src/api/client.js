@@ -46,6 +46,10 @@ export function getStoredUser() {
 async function parseBody(res) {
   const text = await res.text()
   if (!text) return null
+  const ct = res.headers.get('content-type') || ''
+  if (ct.includes('text/html') || text.trimStart().startsWith('<!DOCTYPE') || text.trimStart().toLowerCase().startsWith('<html')) {
+    return { error: text }
+  }
   try {
     return JSON.parse(text)
   } catch {
