@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// App users (Clerk and/or legacy JWT)
+model User {
+  id        String    @id @default(uuid()) @db.Uuid
+  email     String    @unique
+  password  String
+  clerkId   String?   @unique
+  createdAt DateTime  @default(now())
+  bookings  Booking[]
+}
+
+model Flight {
+  id            String    @id @default(uuid()) @db.Uuid
+  airline       String
+  from          String
+  to            String
+  departureTime DateTime
+  arrivalTime   DateTime
+  price         Decimal   @db.Decimal(10, 2)
+  stops         Int       @default(0)
+  bookings      Booking[]
+}
+
+model Booking {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  flightId   String   @db.Uuid
+  passengers Json
+  totalPrice Decimal  @db.Decimal(10, 2)
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flight     Flight   @relation(fields: [flightId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([flightId])
+}
+
+/// Neon CRUD demo (see src/main.ts) — separate from auth User
+model DemoUser {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+}
