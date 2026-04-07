@@ -9,8 +9,8 @@ function resolveApiBase() {
   const fromEnv = import.meta.env.VITE_API_URL
   const trimmed = typeof fromEnv === 'string' ? fromEnv.trim() : ''
   if (trimmed) return trimmed.replace(/\/$/, '')
-  if (import.meta.env.DEV) return '/api'
-  return 'http://localhost:4000'
+  // Dev: Vite proxy. Production (e.g. Vercel): same-origin /api serverless handler.
+  return '/api'
 }
 
 const BASE = resolveApiBase()

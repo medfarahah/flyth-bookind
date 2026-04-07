@@ -3,11 +3,16 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "server"
+  ],
   "scripts": {
     "dev": "vite",
     "dev:api": "npm --prefix server run dev",
     "dev:full": "concurrently -n web,api -c cyan,magenta \"npm run dev\" \"npm --prefix server run dev\"",
-    "build": "vite build",
+    "postinstall": "npm --prefix server run prisma:generate",
+    "build": "npm --prefix server run prisma:generate && vite build",
+    "vercel-build": "npm run build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

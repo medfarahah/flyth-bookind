@@ -15,6 +15,9 @@ server/src/generated
 dist-ssr
 *.local
 
+# Vercel
+.vercel
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
