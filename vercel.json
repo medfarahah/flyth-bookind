@@ -8,8 +8,8 @@
   ],
   "functions": {
     "api/[[...path]].ts": {
-      "maxDuration": 30,
-      "memory": 1024,
+      "maxDuration": 60,
+      "memory": 3008,
       "includeFiles": "server/src/generated/**"
     }
   }

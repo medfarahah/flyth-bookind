@@ -28,6 +28,8 @@ model Flight {
   price         Decimal   @db.Decimal(10, 2)
   stops         Int       @default(0)
   bookings      Booking[]
+
+  @@index([departureTime])
 }
 
 model Booking {

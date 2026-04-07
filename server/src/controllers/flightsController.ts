@@ -140,6 +140,7 @@ export async function listFlights(req: Request, res: Response): Promise<void> {
       ],
     },
     orderBy: { departureTime: 'asc' },
+    take: 500,
   })
 
   res.json(

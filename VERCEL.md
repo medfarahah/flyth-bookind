@@ -78,3 +78,13 @@ If `/api/...` responses look like your `index.html` (DOCTYPE, `<div id="root">`)
 This project’s `vercel.json` only rewrites **non-API** paths to `index.html` (see the `rewrites` entry). Redeploy after pulling that change.
 
 Quick check in the browser: open `https://YOUR_DOMAIN/api/health` — you should see `{"ok":true}` as JSON, not HTML.
+
+## 8. `FUNCTION_INVOCATION_TIMEOUT`
+
+Serverless has a **max duration** (this repo sets **60s** and **3008 MB** in `vercel.json` + `api/[[...path]].ts`). On the **Hobby** plan, Vercel may still **cap** execution (often **10s**) — upgrade to **Pro** for longer limits, or keep responses fast.
+
+After large seeds, flight search can be heavy. The API caps list results at **500** rows and adds an index on **`departureTime`**. Apply the index to Neon:
+
+```bash
+cd server && npx prisma db push
+```
