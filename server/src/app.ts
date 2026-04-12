@@ -1,6 +1,7 @@
 import './loadEnv.js'
 import express from 'express'
 import cors from 'cors'
+import { prisma } from './db.js'
 import authRoutes from './routes/auth.routes.js'
 import flightsRoutes from './routes/flights.routes.js'
 import bookingsRoutes from './routes/bookings.routes.js'
@@ -47,8 +48,19 @@ app.use(
 )
 app.use(express.json({ limit: '1mb' }))
 
-app.get('/health', (_req, res) => {
-  res.json({ ok: true })
+app.get('/health', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    res.json({ ok: true, database: 'connected' })
+  } catch (err) {
+    console.error('[health] database check failed', err)
+    res.status(503).json({
+      ok: false,
+      database: 'error',
+      message:
+        'Cannot reach Neon. Check DATABASE_URL on Vercel (pooled URL, sslmode=require) and that the branch is active.',
+    })
+  }
 })
 
 app.use('/auth', authRoutes)

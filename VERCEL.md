@@ -26,8 +26,8 @@ Add these in **Project → Settings → Environment Variables** (Production and 
 
 | Name | Notes |
 |------|--------|
-| `DATABASE_URL` | Neon **pooled** connection string (`-pooler` in host) |
-| `DIRECT_URL` | Neon **direct** URL (for Prisma CLI if you run migrations from CI) |
+| `DATABASE_URL` | Neon **pooled** connection string — host must include **`-pooler`** (required at **runtime** for `PrismaNeon` adapter). |
+| `DIRECT_URL` | Neon **direct** URL — host **without** `-pooler` (for `prisma generate` / migrations). Set for **Production**, **Preview**, and **Build** so installs succeed. |
 | `JWT_SECRET` | Long random string (legacy JWT auth) |
 | `CLERK_SECRET_KEY` | Clerk **Secret key** (must match the same Clerk app as the publishable key) |
 
@@ -59,6 +59,14 @@ Under **Configure → Domains**, add:
 
 Run migrations or `prisma db push` from your machine with `DIRECT_URL`, or use Neon’s SQL editor. Ensure `User` has `clerkId` if you use Clerk (see Prisma schema).
 
+### Database not working after deploy (checklist)
+
+1. **Both** `DATABASE_URL` and `DIRECT_URL` exist in Vercel → **Settings → Environment Variables**, for **Production** and **Preview** (and **Development** if you use `vercel dev`). Missing vars are the most common issue — local `.env` is **not** uploaded to Vercel.
+2. **`DATABASE_URL`** must be the **pooled** Neon string (Dashboard → **Connection string** → **Pooled** / hostname contains `-pooler`). The app uses `@prisma/adapter-neon`, which expects that URL. Append `?sslmode=require` if Neon does not add it.
+3. **`DIRECT_URL`** must be the **direct** (non-pooler) URL for Prisma CLI / `prisma generate` (`prisma.config.ts`). Add it to **Build** env vars too so `npm run build` / `prisma generate` can read it.
+4. Open **`https://YOUR_APP.vercel.app/api/health`** — you should see `{"ok":true,"database":"connected"}`. If you see `503` and `database: "error"`, the URL is set but Neon rejected the connection (wrong password, DB deleted, or IP / project issue).
+5. Redeploy after changing env vars (**Deployments → … → Redeploy**).
+
 ## 6. Local check
 
 ```bash
@@ -77,7 +85,7 @@ If `/api/...` responses look like your `index.html` (DOCTYPE, `<div id="root">`)
 
 This project’s `vercel.json` only rewrites **non-API** paths to `index.html` (see the `rewrites` entry). Redeploy after pulling that change.
 
-Quick check in the browser: open `https://YOUR_DOMAIN/api/health` — you should see `{"ok":true}` as JSON, not HTML.
+Quick check in the browser: open `https://YOUR_DOMAIN/api/health` — you should see `{"ok":true,"database":"connected"}` as JSON, not HTML.
 
 ## Stack note (not Next.js)
 

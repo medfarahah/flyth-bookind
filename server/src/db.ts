@@ -4,7 +4,9 @@ import { PrismaClient } from './generated/prisma/client.js'
 
 const connectionString = process.env.DATABASE_URL
 if (!connectionString) {
-  throw new Error('DATABASE_URL is required (Neon pooled connection string).')
+  throw new Error(
+    'DATABASE_URL is required. On Vercel: Project → Settings → Environment Variables → add DATABASE_URL (Neon *pooled* URL, host contains `-pooler`). Enable for Production and Preview.'
+  )
 }
 
 /**
