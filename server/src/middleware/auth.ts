@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express'
 import { createClerkClient, verifyToken } from '@clerk/backend'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { randomUUID } from 'node:crypto'
 import { prisma } from '../db.js'
