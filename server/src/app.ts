@@ -48,19 +48,46 @@ app.use(
 )
 app.use(express.json({ limit: '1mb' }))
 
+/** Race a promise against a timeout. */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
+    promise.then(
+      (v) => { clearTimeout(timer); resolve(v) },
+      (e) => { clearTimeout(timer); reject(e) },
+    )
+  })
+}
+
 app.get('/health', async (_req, res) => {
+  const info: Record<string, unknown> = {
+    ok: true,
+    region: process.env.VERCEL_REGION || process.env.AWS_REGION || 'unknown',
+    hasDbUrl: !!process.env.DATABASE_URL,
+  }
+
+  if (!process.env.DATABASE_URL) {
+    res.status(503).json({
+      ...info,
+      ok: false,
+      database: 'missing DATABASE_URL',
+    })
+    return
+  }
+
   try {
-    await prisma.$queryRaw`SELECT 1`
-    res.json({ ok: true, database: 'connected' })
+    await withTimeout(prisma.$queryRaw`SELECT 1`, 5000, 'DB ping')
+    info.database = 'connected'
   } catch (err) {
     console.error('[health] database check failed', err)
-    res.status(503).json({
-      ok: false,
-      database: 'error',
-      message:
-        'Cannot reach Neon. Check DATABASE_URL on Vercel (pooled URL, sslmode=require) and that the branch is active.',
-    })
+    info.ok = false
+    info.database = 'error'
+    info.message = err instanceof Error ? err.message : 'unknown error'
+    res.status(503).json(info)
+    return
   }
+
+  res.json(info)
 })
 
 app.use('/auth', authRoutes)

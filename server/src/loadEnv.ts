@@ -1,13 +1,15 @@
-import { config } from 'dotenv'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-
-const serverRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-
 /**
- * Vercel injects env in `process.env` — there is no `server/.env` in production.
- * Only load a local file when not on Vercel so dashboard secrets are never overridden.
+ * On Vercel, env is injected by the platform — skip dotenv entirely.
+ * Locally, load server/.env.
  */
 if (!process.env.VERCEL) {
-  config({ path: resolve(serverRoot, '.env'), override: true })
+  try {
+    const { config } = await import('dotenv')
+    const { dirname, resolve } = await import('node:path')
+    const { fileURLToPath } = await import('node:url')
+    const serverRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+    config({ path: resolve(serverRoot, '.env'), override: true })
+  } catch {
+    // dotenv or path resolution failed — fall through to process.env
+  }
 }
